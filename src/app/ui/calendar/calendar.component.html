@@ -5,7 +5,7 @@
         &lt;
       </button>
       <p class="calendar__current-date">
-        {{ currentDate.format("MMMM YYYY") }}
+        {{ currentDate | dateFormatter }}
       </p>
       <button class="calendar__button" (click)="changeMonthHandler(1)">
         &gt;
@@ -27,15 +27,8 @@
 
   <div class="calendar__days">
     @for (day of daysInMonth; track day.unix()) {
-    <div
-      class="calendar__day"
-      [ngClass]="{
-        'calendar__other-month': !day.isSame(currentDate, 'month'),
-        calendar__today: day.isSame(today, 'day'),
-        calendar__weekend: day.isoWeekday() === 6 || day.isoWeekday() === 7
-      }"
-    >
-      {{ day.date() }}
+    <div class="calendar__day" [class]="day | dayClass : currentDate : today">
+      {{ day | dayFormatter }}
     </div>
     }
   </div>

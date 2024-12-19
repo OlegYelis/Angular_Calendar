@@ -1,11 +1,14 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
+import { DateFormatterPipe } from '../../pipes/date-formatter.pipe';
+import { DayFormatterPipe } from '../../pipes/day-formatter.pipe';
+import { DayClassPipe } from '../../pipes/day-class.pipe';
 import moment from 'moment';
 
 @Component({
   selector: 'app-calendar',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, DateFormatterPipe, DayFormatterPipe, DayClassPipe],
   templateUrl: './calendar.component.html',
   styleUrls: ['./calendar.component.scss'],
 })
