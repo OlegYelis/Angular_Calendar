@@ -33,7 +33,9 @@ export class CalendarComponent {
   }
 
   generateCalendar(): void {
-    const totalDays = 42;
+    const totalDays = 42; // Set the number of days in the calendar, taking into account 6 weeks (7 days each).
+    // This ensures a fixed size of the calendar so that its height does not change when the months change.
+
     const startDay = this.currentDate.clone().startOf('month').startOf('week');
     const day = startDay.clone().subtract(1, 'day');
     const dayArray = [...Array(totalDays)].map(() => day.add(1, 'day').clone());
