@@ -27,7 +27,12 @@
 
   <div class="calendar__days">
     @for (day of daysInMonth; track day.unix()) {
-    <div class="calendar__day" [class]="day | dayClass : currentDate : today">
+    <div
+      class="calendar__day"
+      [class.calendar__other-month]="day | sameMonth : currentDate"
+      [class.calendar__today]="day | isToday : today"
+      [class.calendar__weekend]="day | isWeekend"
+    >
       {{ day | dayFormatter }}
     </div>
     }

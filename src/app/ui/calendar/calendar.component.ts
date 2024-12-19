@@ -2,13 +2,22 @@ import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { DateFormatterPipe } from '../../pipes/date-formatter.pipe';
 import { DayFormatterPipe } from '../../pipes/day-formatter.pipe';
-import { DayClassPipe } from '../../pipes/day-class.pipe';
 import moment from 'moment';
+import { SameMonthPipe } from '../../pipes/day-of-same-month.pipe';
+import { IsTodayPipe } from '../../pipes/today-day.pipe';
+import { IsWeekendPipe } from '../../pipes/weekend-day.pipe';
 
 @Component({
   selector: 'app-calendar',
   standalone: true,
-  imports: [CommonModule, DateFormatterPipe, DayFormatterPipe, DayClassPipe],
+  imports: [
+    CommonModule,
+    DateFormatterPipe,
+    DayFormatterPipe,
+    SameMonthPipe,
+    IsTodayPipe,
+    IsWeekendPipe,
+  ],
   templateUrl: './calendar.component.html',
   styleUrls: ['./calendar.component.scss'],
 })
@@ -44,7 +53,7 @@ export class CalendarComponent {
   }
 
   changeMonthHandler(direction: number): void {
-    this.currentDate.add(direction, 'month');
+    this.currentDate = this.currentDate.clone().add(direction, 'month');
     this.generateCalendar();
   }
 
