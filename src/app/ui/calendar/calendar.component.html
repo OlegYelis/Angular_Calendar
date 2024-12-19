@@ -1,0 +1,40 @@
+<div class="calendar">
+  <div class="calendar__header">
+    <div class="calendar__actions">
+      <button class="calendar__button" (click)="changeMonthHandler(-1)">
+        &lt;
+      </button>
+      <p class="calendar__current-date">
+        {{ currentDate | dateFormatter }}
+      </p>
+      <button class="calendar__button" (click)="changeMonthHandler(1)">
+        &gt;
+      </button>
+      <button
+        class="calendar__button calendar__button-today"
+        (click)="todayMonthHandler()"
+      >
+        Today
+      </button>
+    </div>
+  </div>
+
+  <div class="calendar__week-days">
+    @for (day of weekDays; track day) {
+    <div class="calendar__week-day">{{ day }}</div>
+    }
+  </div>
+
+  <div class="calendar__days">
+    @for (day of daysInMonth; track day.unix()) {
+    <div
+      class="calendar__day"
+      [class.calendar__other-month]="day | sameMonth : currentDate"
+      [class.calendar__today]="day | isToday : today"
+      [class.calendar__weekend]="day | isWeekend"
+    >
+      {{ day | dayFormatter }}
+    </div>
+    }
+  </div>
+</div>

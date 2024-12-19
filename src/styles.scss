@@ -1,1 +1,37 @@
-/* You can add global styles to this file, and also import other style files */
+:root {
+  --primary-text-color: #606060;
+  --secondary-text-color: #858686;
+  --light-text-color: #ccc;
+  --primary-btn-color: #f5f7f9;
+  --border-color: #e8e9ea;
+  --primary-bg-color: #ffffff;
+  --secondary-bg-color: #f7f7f7;
+  --weekend-bg-color: #fafaff;
+  --accent-color: #1bb7e1;
+}
+
+body {
+  background-color: var(--primary-bg-color);
+  color: var(--primary-text-color);
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+}
+
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0;
+}
+
+ul,
+ol {
+  padding-left: 0;
+  margin: 0;
+}
+
+img {
+  display: block;
+}
