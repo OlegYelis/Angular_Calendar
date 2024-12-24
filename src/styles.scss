@@ -23,6 +23,20 @@
       filled-label-text-weight: 500,
       filled-container-height: 30px,
       filled-horizontal-padding: 15px,
+
+      outlined-outline-color: var(--accent-color),
+      outlined-label-text-color: var(--accent-color),
+      outlined-container-shape: 5px,
+      outlined-label-text-size: 12px,
+      outlined-label-text-weight: 500,
+      outlined-container-height: 30px,
+      outlined-horizontal-padding: 15px,
+    )
+  );
+
+  @include mat.dialog-overrides(
+    (
+      container-shape: 15px,
     )
   );
 }
