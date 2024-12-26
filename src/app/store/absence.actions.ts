@@ -17,7 +17,3 @@ export const deleteAbsence = createAction(
 );
 
 export const loadAbsences = createAction('[Absence] Load Absences');
-export const loadAbsencesSuccess = createAction(
-  '[Absence] Load Absences Success',
-  props<{ absences: Absence[] }>()
-);

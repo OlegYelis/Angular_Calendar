@@ -4,6 +4,7 @@ import {
   FormGroup,
   Validators,
   FormControl,
+  AbstractControl,
 } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -17,7 +18,7 @@ import moment from 'moment';
 import { selectAllAbsences } from '../../store/absence.selectors';
 import { addAbsence } from '../../store/absence.actions';
 import { LIMITS } from '../../store/limits';
-import { Absence } from '../../store/absence.model';
+import { Absence, AbsenceType } from '../../store/absence.model';
 
 export const MY_FORMATS = {
   parse: {
@@ -48,13 +49,29 @@ export const MY_FORMATS = {
 })
 export class AbsenceFormComponent {
   private readonly store = inject(Store);
+  Vacation = AbsenceType.Vacation;
+  Sick = AbsenceType.Sick;
 
   form = new FormGroup({
     absenceType: new FormControl(null, Validators.required),
     fromDate: new FormControl(null, Validators.required),
     toDate: new FormControl(null, Validators.required),
+    // toDate: new FormControl(null, [
+    //   Validators.required,
+    //   (control) => this.validateToDateAfterFromDate(control),
+    // ]),
     comment: new FormControl(null),
   });
+
+  // private validateToDateAfterFromDate(control: AbstractControl) {
+  //   const fromDate = this.form?.get('fromDate')?.value;
+  //   const toDate = control.value;
+
+  //   if (fromDate && toDate && new Date(toDate) < new Date(fromDate)) {
+  //     return { toDateAfterFromDate: true };
+  //   }
+  //   return null;
+  // }
 
   // Object for storing the number of used vacation and sick leave days by year
   absencesByYear: Record<number, { vacation: number; sick: number }> = {};
@@ -65,100 +82,126 @@ export class AbsenceFormComponent {
     });
   }
 
-  // Groups absences by year
   groupAbsencesByYear(absences: Absence[]) {
     this.absencesByYear = {};
 
     absences.forEach((absence) => {
-      const fromDate = moment(absence.fromDate);
-      const toDate = moment(absence.toDate);
-
-      // Rounding up each year in the period of absence
-      for (let year = fromDate.year(); year <= toDate.year(); year++) {
-        const startOfYear = moment(`${year}-01-01`);
-        const endOfYear = moment(`${year}-12-31`);
-
-        // Determining effective dates within the year
-        const effectiveFromDate = fromDate.isBefore(startOfYear)
-          ? startOfYear
-          : fromDate;
-        const effectiveToDate = toDate.isAfter(endOfYear) ? endOfYear : toDate;
-
-        const daysInYear = effectiveToDate.diff(effectiveFromDate, 'days') + 1;
-
-        // Initialize the year if it does not already exist
-        if (!this.absencesByYear[year]) {
-          this.absencesByYear[year] = { vacation: 0, sick: 0 };
-        }
-
-        // Adding days for the corresponding type
-        if (
-          absence.absenceType === 'vacation' ||
-          absence.absenceType === 'sick'
-        ) {
-          this.absencesByYear[year][absence.absenceType] += daysInYear;
-        }
-      }
+      const { fromDate, toDate, absenceType } = absence;
+      this.updateAbsencesByYear(fromDate, toDate, absenceType);
     });
   }
 
-  onSubmit() {
-    if (this.form.valid) {
-      const { absenceType, fromDate, toDate } = this.form.value;
+  private updateAbsencesByYear(
+    fromDate: string,
+    toDate: string,
+    absenceType: AbsenceType
+  ) {
+    const { from, to } = this.getFormattedDates(fromDate, toDate);
 
-      const from = moment(fromDate);
-      const to = moment(toDate);
+    for (let year = from.year(); year <= to.year(); year++) {
+      const { effectiveFromDate, effectiveToDate } = this.getEffectiveDates(
+        from,
+        to,
+        year
+      );
+      const daysInYear = effectiveToDate.diff(effectiveFromDate, 'days') + 1;
 
-      if (!absenceType || !fromDate || !toDate) {
-        alert('Please fill in all required fields.');
-        return;
+      if (!this.absencesByYear[year]) {
+        this.absencesByYear[year] = { vacation: 0, sick: 0 };
       }
 
-      // Rounding up each year in the period of absence
-      for (let year = from.year(); year <= to.year(); year++) {
-        const startOfYear = moment(`${year}-01-01`);
-        const endOfYear = moment(`${year}-12-31`);
-
-        // Determining effective dates within the year
-        const effectiveFromDate = from.isBefore(startOfYear)
-          ? startOfYear
-          : from;
-        const effectiveToDate = to.isAfter(endOfYear) ? endOfYear : to;
-
-        const requestedDays =
-          effectiveToDate.diff(effectiveFromDate, 'days') + 1;
-
-        // Initialize the year if it does not already exist
-        if (!this.absencesByYear[year]) {
-          this.absencesByYear[year] = { vacation: 0, sick: 0 };
-        }
-
-        const usedDays = this.absencesByYear[year][absenceType] || 0;
-
-        if (
-          absenceType === 'vacation' &&
-          usedDays + requestedDays > LIMITS.vacation
-        ) {
-          alert(`Vacation days limit exceeded for the year ${year}.`);
-          return;
-        }
-
-        if (absenceType === 'sick' && usedDays + requestedDays > LIMITS.sick) {
-          alert(`Sick leave days limit exceeded for the year ${year}.`);
-          return;
-        }
-      }
-
-      const absence = {
-        id: moment().format('X'),
-        absenceType: absenceType || '',
-        comment: this.form.value.comment || '',
-        fromDate: from.format('YYYY-MM-DD'),
-        toDate: to.format('YYYY-MM-DD'),
-      };
-
-      this.store.dispatch(addAbsence({ absence }));
-      this.form.reset();
+      this.absencesByYear[year][absenceType] += daysInYear;
     }
+  }
+
+  private getFormattedDates(fromDate: string, toDate: string) {
+    return {
+      from: moment(fromDate),
+      to: moment(toDate),
+    };
+  }
+
+  private getEffectiveDates(
+    from: moment.Moment,
+    to: moment.Moment,
+    year: number
+  ) {
+    const startOfYear = moment(`${year}-01-01`);
+    const endOfYear = moment(`${year}-12-31`);
+
+    const effectiveFromDate = from.isBefore(startOfYear) ? startOfYear : from;
+    const effectiveToDate = to.isAfter(endOfYear) ? endOfYear : to;
+
+    return { effectiveFromDate, effectiveToDate };
+  }
+
+  onSubmit() {
+    if (this.form.invalid) {
+      alert('Please fill in all required fields.');
+      return;
+    }
+
+    const { absenceType, fromDate, toDate } = this.form.value;
+
+    if (!absenceType || !fromDate || !toDate) {
+      alert('Please fill in all required fields.');
+      return;
+    }
+
+    const { from, to } = this.getFormattedDates(fromDate, toDate);
+
+    if (this.isAbsenceExceedingLimits(absenceType, from, to)) {
+      return;
+    }
+
+    const absence = this.createAbsenceObject(absenceType, from, to);
+    this.store.dispatch(addAbsence({ absence }));
+    this.form.reset();
+  }
+
+  private isAbsenceExceedingLimits(
+    absenceType: AbsenceType,
+    from: moment.Moment,
+    to: moment.Moment
+  ): boolean {
+    for (let year = from.year(); year <= to.year(); year++) {
+      const { effectiveFromDate, effectiveToDate } = this.getEffectiveDates(
+        from,
+        to,
+        year
+      );
+
+      const requestedDays = effectiveToDate.diff(effectiveFromDate, 'days') + 1;
+
+      if (!this.absencesByYear[year]) {
+        this.absencesByYear[year] = { vacation: 0, sick: 0 };
+      }
+
+      const usedDays = this.absencesByYear[year]?.[absenceType] || 0;
+
+      if (
+        (absenceType === this.Vacation &&
+          usedDays + requestedDays > LIMITS.vacation) ||
+        (absenceType === this.Sick && usedDays + requestedDays > LIMITS.sick)
+      ) {
+        alert(`Exceeded limit for ${absenceType} days in the year ${year}.`);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private createAbsenceObject(
+    absenceType: AbsenceType,
+    from: moment.Moment,
+    to: moment.Moment
+  ) {
+    return {
+      id: moment().format('X'),
+      absenceType,
+      comment: this.form.value.comment || '',
+      fromDate: from.format('YYYY-MM-DD'),
+      toDate: to.format('YYYY-MM-DD'),
+    };
   }
 }

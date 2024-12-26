@@ -4,8 +4,8 @@
   <mat-form-field appearance="outline" class="form__select">
     <mat-label>What type of absence</mat-label>
     <mat-select formControlName="absenceType">
-      <mat-option value="sick">Sick</mat-option>
-      <mat-option value="vacation">Vacation</mat-option>
+      <mat-option [value]="Sick">Sick</mat-option>
+      <mat-option [value]="Vacation">Vacation</mat-option>
     </mat-select>
   </mat-form-field>
 
