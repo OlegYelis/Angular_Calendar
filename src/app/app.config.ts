@@ -11,13 +11,14 @@ import { provideStore } from '@ngrx/store';
 import { provideStoreDevtools } from '@ngrx/store-devtools';
 import { provideEffects } from '@ngrx/effects';
 import { MAT_DATE_LOCALE } from '@angular/material/core';
+import { absenceReducer } from './store/absence.reducer';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
     provideAnimationsAsync(),
-    provideStore(),
+    provideStore({ absence: absenceReducer }),
     provideStoreDevtools({ maxAge: 25, logOnly: !isDevMode() }),
     provideEffects(),
     { provide: MAT_DATE_LOCALE, useValue: 'uk' },
