@@ -56,24 +56,9 @@ export class AbsenceFormComponent {
     absenceType: new FormControl(null, Validators.required),
     fromDate: new FormControl(null, Validators.required),
     toDate: new FormControl(null, Validators.required),
-    // toDate: new FormControl(null, [
-    //   Validators.required,
-    //   (control) => this.validateToDateAfterFromDate(control),
-    // ]),
     comment: new FormControl(null),
   });
 
-  // private validateToDateAfterFromDate(control: AbstractControl) {
-  //   const fromDate = this.form?.get('fromDate')?.value;
-  //   const toDate = control.value;
-
-  //   if (fromDate && toDate && new Date(toDate) < new Date(fromDate)) {
-  //     return { toDateAfterFromDate: true };
-  //   }
-  //   return null;
-  // }
-
-  // Object for storing the number of used vacation and sick leave days by year
   absencesByYear: Record<number, { vacation: number; sick: number }> = {};
 
   constructor() {
