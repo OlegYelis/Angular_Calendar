@@ -1,6 +1,9 @@
+@use "@angular/material" as mat;
+
 :root {
   --primary-text-color: #606060;
   --secondary-text-color: #858686;
+  --heading-text-color: #272727;
   --light-text-color: #ccc;
   --primary-btn-color: #f5f7f9;
   --border-color: #e8e9ea;
@@ -8,6 +11,34 @@
   --secondary-bg-color: #f7f7f7;
   --weekend-bg-color: #fafaff;
   --accent-color: #1bb7e1;
+  --absence-vacation-color: #06b405;
+  --absence-sick-color: #b40404;
+
+  @include mat.button-overrides(
+    (
+      filled-container-color: var(--accent-color),
+      filled-label-text-color: var(--primary-btn-color),
+      filled-container-shape: 5px,
+      filled-label-text-size: 12px,
+      filled-label-text-weight: 500,
+      filled-container-height: 30px,
+      filled-horizontal-padding: 15px,
+
+      outlined-outline-color: var(--accent-color),
+      outlined-label-text-color: var(--accent-color),
+      outlined-container-shape: 5px,
+      outlined-label-text-size: 12px,
+      outlined-label-text-weight: 500,
+      outlined-container-height: 30px,
+      outlined-horizontal-padding: 15px,
+    )
+  );
+
+  @include mat.dialog-overrides(
+    (
+      container-shape: 15px,
+    )
+  );
 }
 
 body {

@@ -1,12 +1,13 @@
 import { Component } from '@angular/core';
 import { CalendarComponent } from './ui/calendar/calendar.component';
-import { CommonModule } from '@angular/common';
+import { AbsenceComponent } from './ui/absence/absence.component';
 
 @Component({
   selector: 'app-root',
-  imports: [CalendarComponent, CommonModule],
+  standalone: true,
+  imports: [CalendarComponent, AbsenceComponent],
   templateUrl: './app.component.html',
-  styleUrl: './app.component.scss',
+  styleUrls: ['./app.component.scss'],
 })
 export class AppComponent {
   title = 'Angular_Calendar';
