@@ -1,10 +1,11 @@
 import { Component, inject } from '@angular/core';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import {
   ReactiveFormsModule,
   FormGroup,
   Validators,
   FormControl,
-  AbstractControl,
 } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -49,8 +50,7 @@ export const MY_FORMATS = {
 })
 export class AbsenceFormComponent {
   private readonly store = inject(Store);
-  Vacation = AbsenceType.Vacation;
-  Sick = AbsenceType.Sick;
+  currentAbsence = AbsenceType;
 
   form = new FormGroup({
     absenceType: new FormControl(null, Validators.required),
@@ -61,10 +61,20 @@ export class AbsenceFormComponent {
 
   absencesByYear: Record<number, { vacation: number; sick: number }> = {};
 
+  private destroy$ = new Subject<void>();
+
   constructor() {
-    this.store.select(selectAllAbsences).subscribe((absences) => {
-      this.groupAbsencesByYear(absences);
-    });
+    this.store
+      .select(selectAllAbsences)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((absences) => {
+        this.groupAbsencesByYear(absences);
+      });
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   groupAbsencesByYear(absences: Absence[]) {
@@ -165,9 +175,10 @@ export class AbsenceFormComponent {
       const usedDays = this.absencesByYear[year]?.[absenceType] || 0;
 
       if (
-        (absenceType === this.Vacation &&
+        (absenceType === this.currentAbsence.Vacation &&
           usedDays + requestedDays > LIMITS.vacation) ||
-        (absenceType === this.Sick && usedDays + requestedDays > LIMITS.sick)
+        (absenceType === this.currentAbsence.Sick &&
+          usedDays + requestedDays > LIMITS.sick)
       ) {
         alert(`Exceeded limit for ${absenceType} days in the year ${year}.`);
         return true;
