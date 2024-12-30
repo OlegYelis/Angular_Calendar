@@ -7,8 +7,12 @@ import { SameMonthPipe } from '../../pipes/day-of-same-month.pipe';
 import { IsTodayPipe } from '../../pipes/today-day.pipe';
 import { IsWeekendPipe } from '../../pipes/weekend-day.pipe';
 import { AbsenceTypeClassPipe } from '../../pipes/absence-type-class.pipe';
-import { selectAbsencesInRange } from '../../store/absence.selectors';
+import {
+  selectAbsencesInRange,
+  selectCurrentDate,
+} from '../../store/absence.selectors';
 import moment from 'moment';
+import { setCurrentDate } from '../../store/absence.actions';
 
 @Component({
   selector: 'app-calendar',
@@ -28,7 +32,9 @@ import moment from 'moment';
 export class CalendarComponent {
   private readonly store = inject(Store);
 
-  currentDate: moment.Moment;
+  public readonly currentDate$ = this.store.select(selectCurrentDate);
+
+  current: moment.Moment = moment();
   today: moment.Moment;
   daysInMonth: moment.Moment[] = [];
   weekDays: string[] = [...Array(7)].map((_, i) =>
@@ -44,12 +50,11 @@ export class CalendarComponent {
   }[] = [];
 
   constructor() {
-    moment.updateLocale('en', { week: { dow: 1 } });
-    this.currentDate = moment();
     this.today = moment();
   }
 
   ngOnInit(): void {
+    this.currentDate$.subscribe((currentDate) => (this.current = currentDate));
     this.generateCalendar();
   }
 
@@ -57,14 +62,14 @@ export class CalendarComponent {
     const totalDays = 42; // Set the number of days in the calendar, taking into account 6 weeks (7 days each).
     // This ensures a fixed size of the calendar so that its height does not change when the months change.
 
-    const startDay = this.currentDate.clone().startOf('month').startOf('week');
+    const startDay = this.current.clone().startOf('month').startOf('week');
     const day = startDay.clone().subtract(1, 'day');
     const dayArray = [...Array(totalDays)].map(() => day.add(1, 'day').clone());
 
     this.daysInMonth = dayArray;
 
     this.store
-      .select(selectAbsencesInRange(this.currentDate))
+      .select(selectAbsencesInRange(this.current))
       .subscribe((absences) => {
         this.absencesByDay = absences
           .map((absence) => {
@@ -115,12 +120,16 @@ export class CalendarComponent {
   }
 
   changeMonthHandler(direction: number): void {
-    this.currentDate = this.currentDate.clone().add(direction, 'month');
+    this.store.dispatch(
+      setCurrentDate({
+        currentDate: this.current.clone().add(direction, 'month'),
+      })
+    );
     this.generateCalendar();
   }
 
   todayMonthHandler(): void {
-    this.currentDate = this.today.clone();
+    this.store.dispatch(setCurrentDate({ currentDate: this.today.clone() }));
     this.generateCalendar();
   }
 }

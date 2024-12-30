@@ -24,3 +24,38 @@ export const selectAbsencesInRange = (current: moment.Moment) =>
       );
     });
   });
+
+export const selectCurrentDate = createSelector(
+  selectAbsenceState,
+  (state: AbsenceState) => state.currentDate
+);
+
+export const selectAbsenceDaysByYearAndType = (
+  year: number,
+  absenceType: string
+) =>
+  createSelector(selectAllAbsences, (absences: Absence[]) => {
+    return absences
+      .filter((absence) => {
+        const fromDate = moment(absence.fromDate);
+        const toDate = moment(absence.toDate);
+
+        return (
+          absence.absenceType === absenceType &&
+          (fromDate.year() === year || toDate.year() === year)
+        );
+      })
+      .reduce((totalDays, absence) => {
+        const fromDate = moment(absence.fromDate);
+        const toDate = moment(absence.toDate);
+
+        const start = moment.max(fromDate, moment(`${year}-01-01`));
+        const end = moment.min(toDate, moment(`${year}-12-31`));
+
+        if (start.isAfter(end)) {
+          return totalDays;
+        }
+
+        return totalDays + end.diff(start, 'days') + 1;
+      }, 0);
+  });

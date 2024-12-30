@@ -7,32 +7,45 @@
 
   <details class="absence__details">
     <summary class="absence__summary">
-      <span class="absence__color absence__color--green"></span>Vacation
-      <span class="absence__left">9 days left</span>
+      <span class="absence__color absence__color--green"></span>Vacation @if
+      (LIMITS.vacation - takenVacationDays < LIMITS.vacation){
+      <span class="absence__left">
+        {{ LIMITS.vacation - takenVacationDays }} days left
+      </span>
+      }
     </summary>
-    <p class="absence__details--heading">Breakdown for 2022</p>
+    <p class="absence__details--heading">
+      Breakdown for {{ current | dateFormatter : "YYYY" }}
+    </p>
     <p class="absence__details--txt">
       Entitlement
-      <span>10 days</span>
+      <span>{{ LIMITS.vacation }} days</span>
     </p>
     <p class="absence__details--txt">
       Taken
-      <span>1 day</span>
+      <span>{{ takenVacationDays }} days</span>
     </p>
   </details>
 
   <details class="absence__details">
     <summary class="absence__summary">
-      <span class="absence__color absence__color--red"></span>Sick
+      <span class="absence__color absence__color--red"></span>Sick @if
+      (LIMITS.sick - takenSickDays < LIMITS.sick){
+      <span class="absence__left">
+        {{ LIMITS.sick - takenSickDays }} days left
+      </span>
+      }
     </summary>
-    <p class="absence__details--heading">Breakdown for 2022</p>
+    <p class="absence__details--heading">
+      Breakdown for {{ current | dateFormatter : "YYYY" }}
+    </p>
     <p class="absence__details--txt">
       Entitlement
-      <span>10 days</span>
+      <span>{{ LIMITS.sick }} days</span>
     </p>
     <p class="absence__details--txt">
       Taken
-      <span>1 day</span>
+      <span>{{ takenSickDays }} days</span>
     </p>
   </details>
 </div>
