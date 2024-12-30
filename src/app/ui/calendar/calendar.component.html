@@ -34,6 +34,15 @@
       [class.calendar__weekend]="day | isWeekend"
     >
       {{ day | dayFormatter }}
+
+      @if (isDayAbsent(day)) {
+      <p
+        class="calendar__absence"
+        [class]="getAbsenceTypeForDay(day) | absenceTypeClass"
+      >
+        {{ getCommentForDay(day) }}
+      </p>
+      }
     </div>
     }
   </div>
