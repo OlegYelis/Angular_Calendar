@@ -35,12 +35,12 @@
     >
       {{ day | dayFormatter }}
 
-      @if (isDayAbsent(day)) {
+      @if (day | isDayAbsent : absencesByDay) {
       <p
         class="calendar__absence"
-        [class]="getAbsenceTypeForDay(day) | absenceTypeClass"
+        [class]="day | getAbsenceType : absencesByDay | absenceTypeClass"
       >
-        {{ getCommentForDay(day) }}
+        {{ day | getAbsenceComment : absencesByDay }}
       </p>
       }
     </div>

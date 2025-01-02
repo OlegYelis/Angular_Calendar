@@ -41,7 +41,7 @@ export class AbsenceComponent {
   takenVacationDays = 0;
   takenSickDays = 0;
 
-  public readonly VacationDays$ = this.currentDate$.pipe(
+  public readonly vacationDays$ = this.currentDate$.pipe(
     switchMap((currentDate) =>
       this.store.select(
         selectAbsenceDaysByYearAndType(
@@ -52,7 +52,7 @@ export class AbsenceComponent {
     )
   );
 
-  public readonly SickDays$ = this.currentDate$.pipe(
+  public readonly sickDays$ = this.currentDate$.pipe(
     switchMap((currentDate) =>
       this.store.select(
         selectAbsenceDaysByYearAndType(
@@ -66,15 +66,19 @@ export class AbsenceComponent {
   constructor(private dialog: MatDialog) {}
 
   ngOnInit(): void {
-    combineLatest([this.VacationDays$, this.SickDays$]).pipe(
+    combineLatest([this.vacationDays$, this.sickDays$]).pipe(
       takeUntil(this.destroy$)
     );
 
-    this.currentDate$.subscribe((currentDate) => (this.current = currentDate));
-    this.VacationDays$.subscribe((days) => {
+    this.currentDate$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((currentDate) => {
+        this.current = currentDate;
+      });
+    this.vacationDays$.pipe(takeUntil(this.destroy$)).subscribe((days) => {
       this.takenVacationDays = days;
     });
-    this.SickDays$.subscribe((days) => {
+    this.sickDays$.pipe(takeUntil(this.destroy$)).subscribe((days) => {
       this.takenSickDays = days;
     });
   }

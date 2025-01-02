@@ -13,6 +13,11 @@ import {
 } from '../../store/absence.selectors';
 import moment from 'moment';
 import { setCurrentDate } from '../../store/absence.actions';
+import { Subject, takeUntil } from 'rxjs';
+import { AbsenceByDay } from '../../data/interfaces/absences-by-day.interface';
+import { IsDayAbsentPipe } from '../../pipes/is-day-absent.pipe';
+import { GetAbsenceTypePipe } from '../../pipes/get-absence-type.pipe';
+import { GetAbsenceCommentPipe } from '../../pipes/get-absence-comment.pipe';
 
 @Component({
   selector: 'app-calendar',
@@ -25,12 +30,16 @@ import { setCurrentDate } from '../../store/absence.actions';
     IsTodayPipe,
     IsWeekendPipe,
     AbsenceTypeClassPipe,
+    IsDayAbsentPipe,
+    GetAbsenceTypePipe,
+    GetAbsenceCommentPipe,
   ],
   templateUrl: './calendar.component.html',
   styleUrls: ['./calendar.component.scss'],
 })
 export class CalendarComponent {
   private readonly store = inject(Store);
+  private destroy$ = new Subject<void>();
 
   public readonly currentDate$ = this.store.select(selectCurrentDate);
 
@@ -43,18 +52,16 @@ export class CalendarComponent {
       .format('ddd')
   );
 
-  absencesByDay: {
-    date: moment.Moment;
-    absenceType: string;
-    comment: string;
-  }[] = [];
+  absencesByDay: AbsenceByDay[] = [];
 
   constructor() {
     this.today = moment();
   }
 
   ngOnInit(): void {
-    this.currentDate$.subscribe((currentDate) => (this.current = currentDate));
+    this.currentDate$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((currentDate) => (this.current = currentDate));
     this.generateCalendar();
   }
 
@@ -70,6 +77,7 @@ export class CalendarComponent {
 
     this.store
       .select(selectAbsencesInRange(this.current))
+      .pipe(takeUntil(this.destroy$))
       .subscribe((absences) => {
         this.absencesByDay = absences
           .map((absence) => {
@@ -99,11 +107,11 @@ export class CalendarComponent {
     return dates;
   }
 
-  isDayAbsent(day: moment.Moment): boolean {
-    return this.absencesByDay.some((absence) =>
-      moment(absence.date).isSame(day, 'day')
-    );
-  }
+  // isDayAbsent(day: moment.Moment): boolean {
+  //   return this.absencesByDay.some((absence) =>
+  //     moment(absence.date).isSame(day, 'day')
+  //   );
+  // }
 
   getCommentForDay(day: moment.Moment): string {
     const absence = this.absencesByDay.find((absence) =>
@@ -112,12 +120,12 @@ export class CalendarComponent {
     return absence ? absence.comment : '';
   }
 
-  getAbsenceTypeForDay(day: moment.Moment): string {
-    const absence = this.absencesByDay.find((absence) =>
-      moment(absence.date).isSame(day, 'day')
-    );
-    return absence ? absence.absenceType : '';
-  }
+  // getAbsenceTypeForDay(day: moment.Moment): string {
+  //   const absence = this.absencesByDay.find((absence) =>
+  //     moment(absence.date).isSame(day, 'day')
+  //   );
+  //   return absence ? absence.absenceType : '';
+  // }
 
   changeMonthHandler(direction: number): void {
     this.store.dispatch(
@@ -131,5 +139,10 @@ export class CalendarComponent {
   todayMonthHandler(): void {
     this.store.dispatch(setCurrentDate({ currentDate: this.today.clone() }));
     this.generateCalendar();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }
