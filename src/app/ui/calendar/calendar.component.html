@@ -5,7 +5,7 @@
         &lt;
       </button>
       <p class="calendar__current-date">
-        {{ currentDate | dateFormatter }}
+        {{ current | dateFormatter }}
       </p>
       <button class="calendar__button" (click)="changeMonthHandler(1)">
         &gt;
@@ -29,11 +29,20 @@
     @for (day of daysInMonth; track day.unix()) {
     <div
       class="calendar__day"
-      [class.calendar__other-month]="day | sameMonth : currentDate"
+      [class.calendar__other-month]="day | sameMonth : current"
       [class.calendar__today]="day | isToday : today"
       [class.calendar__weekend]="day | isWeekend"
     >
       {{ day | dayFormatter }}
+
+      @if (day | isDayAbsent : absencesByDay) {
+      <p
+        class="calendar__absence"
+        [class]="day | getAbsenceType : absencesByDay | absenceTypeClass"
+      >
+        {{ day | getAbsenceComment : absencesByDay }}
+      </p>
+      }
     </div>
     }
   </div>

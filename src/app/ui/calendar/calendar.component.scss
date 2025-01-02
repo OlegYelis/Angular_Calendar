@@ -91,8 +91,9 @@
 
 .calendar__day {
   display: flex;
-  align-items: flex-start;
-  justify-content: flex-end;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-start;
   min-height: 120px;
   padding: 5px;
   font-size: 12px;
@@ -124,4 +125,25 @@
       height: 3px;
     }
   }
+}
+
+.calendar__absence {
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 400;
+  width: 100%;
+  min-height: 16px;
+  padding: 2px;
+  margin: 5px 0 0;
+  border-radius: 2px;
+
+  color: var(--absence-comment-color);
+}
+
+.calendar__absence--vacation {
+  background-color: var(--absence-vacation-color);
+}
+
+.calendar__absence--sick {
+  background-color: var(--absence-sick-color);
 }

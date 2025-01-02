@@ -1,13 +1,23 @@
 import { createReducer, on } from '@ngrx/store';
-import { addAbsence, updateAbsence, deleteAbsence } from './absence.actions';
+import {
+  addAbsence,
+  updateAbsence,
+  deleteAbsence,
+  setCurrentDate,
+} from './absence.actions';
 import { Absence } from './absence.model';
+import moment from 'moment';
+
+moment.updateLocale('en', { week: { dow: 1 } });
 
 export interface AbsenceState {
   absences: Absence[];
+  currentDate: moment.Moment;
 }
 
 export const initialState: AbsenceState = {
   absences: [],
+  currentDate: moment(),
 };
 
 export const absenceReducer = createReducer(
@@ -25,5 +35,9 @@ export const absenceReducer = createReducer(
   on(deleteAbsence, (state, { id }) => ({
     ...state,
     absences: state.absences.filter((absence) => absence.id !== id),
+  })),
+  on(setCurrentDate, (state, { currentDate }) => ({
+    ...state,
+    currentDate,
   }))
 );

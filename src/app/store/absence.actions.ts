@@ -17,3 +17,8 @@ export const deleteAbsence = createAction(
 );
 
 export const loadAbsences = createAction('[Absence] Load Absences');
+
+export const setCurrentDate = createAction(
+  '[Absence] Set Current Date',
+  props<{ currentDate: moment.Moment }>()
+);

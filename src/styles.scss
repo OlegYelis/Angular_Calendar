@@ -13,6 +13,7 @@
   --accent-color: #1bb7e1;
   --absence-vacation-color: #06b405;
   --absence-sick-color: #b40404;
+  --absence-comment-color: #ffffff;
 
   @include mat.button-overrides(
     (
