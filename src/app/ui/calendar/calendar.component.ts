@@ -107,26 +107,6 @@ export class CalendarComponent {
     return dates;
   }
 
-  // isDayAbsent(day: moment.Moment): boolean {
-  //   return this.absencesByDay.some((absence) =>
-  //     moment(absence.date).isSame(day, 'day')
-  //   );
-  // }
-
-  getCommentForDay(day: moment.Moment): string {
-    const absence = this.absencesByDay.find((absence) =>
-      moment(absence.date).isSame(day, 'day')
-    );
-    return absence ? absence.comment : '';
-  }
-
-  // getAbsenceTypeForDay(day: moment.Moment): string {
-  //   const absence = this.absencesByDay.find((absence) =>
-  //     moment(absence.date).isSame(day, 'day')
-  //   );
-  //   return absence ? absence.absenceType : '';
-  // }
-
   changeMonthHandler(direction: number): void {
     this.store.dispatch(
       setCurrentDate({
