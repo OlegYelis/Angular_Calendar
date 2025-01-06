@@ -18,6 +18,8 @@ import { AbsenceByDay } from '../../data/interfaces/absences-by-day.interface';
 import { IsDayAbsentPipe } from '../../pipes/is-day-absent.pipe';
 import { GetAbsenceTypePipe } from '../../pipes/get-absence-type.pipe';
 import { GetAbsenceCommentPipe } from '../../pipes/get-absence-comment.pipe';
+import { MatDialog } from '@angular/material/dialog';
+import { AbsenceFormComponent } from '../absence-form/absence-form.component';
 
 @Component({
   selector: 'app-calendar',
@@ -40,6 +42,7 @@ import { GetAbsenceCommentPipe } from '../../pipes/get-absence-comment.pipe';
 export class CalendarComponent {
   private readonly store = inject(Store);
   private destroy$ = new Subject<void>();
+  readonly dialog = inject(MatDialog);
 
   public readonly currentDate$ = this.store.select(selectCurrentDate);
 
@@ -86,6 +89,7 @@ export class CalendarComponent {
             const datesInRange = this.getDatesInRange(fromDate, toDate);
 
             return datesInRange.map((date) => ({
+              id: absence.id,
               date,
               absenceType: absence.absenceType,
               comment: absence.comment || '',
@@ -119,6 +123,31 @@ export class CalendarComponent {
   todayMonthHandler(): void {
     this.store.dispatch(setCurrentDate({ currentDate: this.today.clone() }));
     this.generateCalendar();
+  }
+
+  onAbsenceClick(
+    day: moment.Moment,
+    absencesByDay: AbsenceByDay[],
+    event: MouseEvent
+  ): void {
+    event.stopPropagation();
+
+    const absence = absencesByDay.find((abs) => abs.date.isSame(day, 'day'));
+
+    if (absence) {
+      let dialogRef = this.dialog.open(AbsenceFormComponent, {
+        data: { absenceId: absence.id },
+      });
+
+      dialogRef
+        .afterClosed()
+        .pipe(takeUntil(this.destroy$))
+        .subscribe((result) => {
+          if (result) {
+            console.log('Форма подана:', result);
+          }
+        });
+    }
   }
 
   ngOnDestroy(): void {

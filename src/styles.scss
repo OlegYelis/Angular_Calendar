@@ -14,6 +14,7 @@
   --absence-vacation-color: #06b405;
   --absence-sick-color: #b40404;
   --absence-comment-color: #ffffff;
+  --delete-btn-color: #ec4a3f;
 
   @include mat.button-overrides(
     (
