@@ -1,0 +1,15 @@
+<div class="confirm">
+  @if (data.title){
+  <p class="confirm__title">{{ data.title }}</p>
+  }
+  <p class="confirm__descr">{{ data.description || "Are you sure?" }}</p>
+
+  <div class="confirm__actions">
+    <button mat-flat-button mat-dialog-close="ok">
+      {{ data.buttonOk || "Ok" }}
+    </button>
+    <button mat-stroked-button mat-dialog-close>
+      {{ data.buttonCancel || "Cancel" }}
+    </button>
+  </div>
+</div>

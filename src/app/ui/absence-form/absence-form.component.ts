@@ -13,10 +13,12 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { provideMomentDateAdapter } from '@angular/material-moment-adapter';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import {
   MatDialogModule,
   MatDialogRef,
   MAT_DIALOG_DATA,
+  MatDialog,
 } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import moment from 'moment';
@@ -31,8 +33,7 @@ import {
 } from '../../store/absence.actions';
 import { LIMITS } from '../../store/limits';
 import { Absence, AbsenceType } from '../../store/absence.model';
-import { Notify } from 'notiflix/build/notiflix-notify-aio';
-import { Confirm } from 'notiflix/build/notiflix-confirm-aio';
+import { ConfirmationFormComponent } from '../confirmation-form/confirmation-form.component';
 
 export const MY_FORMATS = {
   parse: {
@@ -65,6 +66,8 @@ export class AbsenceFormComponent {
   private readonly store = inject(Store);
   readonly dialogRef = inject(MatDialogRef<AbsenceFormComponent>);
   readonly data = inject(MAT_DIALOG_DATA);
+  private _snackBar = inject(MatSnackBar);
+  readonly dialog = inject(MatDialog);
   currentAbsence = AbsenceType;
 
   form = new FormGroup({
@@ -172,34 +175,35 @@ export class AbsenceFormComponent {
   }
 
   deleteAbscenceHandler() {
-    Confirm.show(
-      'Confirmation of deletion',
-      'Are you sure you want to remove this absence?',
-      'Yes',
-      'No',
-      () => {
+    const dialogRef = this.dialog.open(ConfirmationFormComponent, {
+      data: {
+        title: 'Confirmation of deletion',
+        description: 'Are you sure you want to remove this absence?',
+        buttonOk: 'Delete',
+        buttonCancel: 'Cancel',
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result === 'ok') {
         this.store.dispatch(deleteAbsence({ id: this.data.absenceId }));
         this.form.reset();
         this.dialogRef.close();
-        Notify.success('Absence deleted successfully!');
-      },
-      () => {
-        return;
-      },
-      {}
-    );
+        this._snackBar.open('Absence deleted successfully!', 'Close');
+      }
+    });
   }
 
   createNewAbsenceHandler() {
     if (this.form.invalid) {
-      Notify.info('Please fill in all required fields.');
+      this._snackBar.open('Please fill in all required fields.', 'Close');
       return;
     }
 
     const { absenceType, fromDate, toDate } = this.form.value;
 
     if (!absenceType || !fromDate || !toDate) {
-      Notify.info('Please fill in all required fields.');
+      this._snackBar.open('Please fill in all required fields.', 'Close');
       return;
     }
 
@@ -208,7 +212,10 @@ export class AbsenceFormComponent {
     }
 
     if (this.isAbsenceOverlapping(fromDate, toDate)) {
-      Notify.warning('The selected dates overlap with an existing absence.');
+      this._snackBar.open(
+        'The selected dates overlap with an existing absence.',
+        'Close'
+      );
       return;
     }
 
@@ -216,19 +223,19 @@ export class AbsenceFormComponent {
     this.store.dispatch(addAbsence({ absence }));
     this.form.reset();
     this.dialogRef.close();
-    Notify.success('Absence added successfully!');
+    this._snackBar.open('Absence added successfully!', 'Close');
   }
 
   updateAbsenceHandler() {
     if (this.form.invalid) {
-      Notify.info('Please fill in all required fields.');
+      this._snackBar.open('Please fill in all required fields.', 'Close');
       return;
     }
 
     const { absenceType, fromDate, toDate } = this.form.value;
 
     if (!absenceType || !fromDate || !toDate) {
-      Notify.info('Please fill in all required fields.');
+      this._snackBar.open('Please fill in all required fields.', 'Close');
       return;
     }
 
@@ -237,7 +244,10 @@ export class AbsenceFormComponent {
     }
 
     if (this.isAbsenceOverlapping(fromDate, toDate)) {
-      Notify.warning('The selected dates overlap with an existing absence.');
+      this._snackBar.open(
+        'The selected dates overlap with an existing absence.',
+        'Close'
+      );
       return;
     }
 
@@ -247,7 +257,7 @@ export class AbsenceFormComponent {
     this.store.dispatch(updateAbsence({ absence }));
     this.form.reset();
     this.dialogRef.close();
-    Notify.success('Absence updated successfully!');
+    this._snackBar.open('Absence updated successfully!', 'Close');
   }
 
   private isAbsenceExceedingLimits(
@@ -299,8 +309,9 @@ export class AbsenceFormComponent {
         (absenceType === this.currentAbsence.Sick &&
           usedDays + requestedDays > LIMITS.sick)
       ) {
-        Notify.info(
-          `Exceeded limit for ${absenceType} days in the year ${year}.`
+        this._snackBar.open(
+          `Exceeded limit for ${absenceType} days in the year ${year}.`,
+          'Close'
         );
         return true;
       }
