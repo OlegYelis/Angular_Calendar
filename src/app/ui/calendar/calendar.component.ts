@@ -20,6 +20,14 @@ import { GetAbsenceTypePipe } from '../../pipes/get-absence-type.pipe';
 import { GetAbsenceCommentPipe } from '../../pipes/get-absence-comment.pipe';
 import { MatDialog } from '@angular/material/dialog';
 import { AbsenceFormComponent } from '../absence-form/absence-form.component';
+import {
+  MatButtonToggleChange,
+  MatButtonToggleModule,
+} from '@angular/material/button-toggle';
+import { YearMonth } from '../../data/interfaces/year-month.interface';
+import { MatSelectModule } from '@angular/material/select';
+import { AbsenceType } from '../../store/absence.model';
+import { ReactiveFormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-calendar',
@@ -35,6 +43,9 @@ import { AbsenceFormComponent } from '../absence-form/absence-form.component';
     IsDayAbsentPipe,
     GetAbsenceTypePipe,
     GetAbsenceCommentPipe,
+    MatButtonToggleModule,
+    MatSelectModule,
+    ReactiveFormsModule,
   ],
   templateUrl: './calendar.component.html',
   styleUrls: ['./calendar.component.scss'],
@@ -43,19 +54,26 @@ export class CalendarComponent {
   private readonly store = inject(Store);
   private destroy$ = new Subject<void>();
   readonly dialog = inject(MatDialog);
+  currentAbsence = AbsenceType;
 
   public readonly currentDate$ = this.store.select(selectCurrentDate);
 
+  totalDays = 42; // Set the number of days in the calendar, taking into account 6 weeks (7 days each).
+  // This ensures a fixed size of the calendar so that its height does not change when the months change.
   current: moment.Moment = moment();
   today: moment.Moment;
   daysInMonth: moment.Moment[] = [];
+  yearMonths: YearMonth[] = [];
   weekDays: string[] = [...Array(7)].map((_, i) =>
     moment()
       .day(i + 1)
       .format('ddd')
   );
+  viewMode: 'month' | 'year' = 'month';
 
   absencesByDay: AbsenceByDay[] = [];
+  filteredAbsences: AbsenceByDay[] = [];
+  selectedAbsenceType: AbsenceType | undefined = undefined;
 
   constructor() {
     this.today = moment();
@@ -65,18 +83,23 @@ export class CalendarComponent {
     this.currentDate$
       .pipe(takeUntil(this.destroy$))
       .subscribe((currentDate) => (this.current = currentDate));
-    this.generateCalendar();
+    this.updateCalendar();
   }
 
-  generateCalendar(): void {
-    const totalDays = 42; // Set the number of days in the calendar, taking into account 6 weeks (7 days each).
-    // This ensures a fixed size of the calendar so that its height does not change when the months change.
+  updateCalendar(): void {
+    if (this.viewMode === 'month') {
+      this.generateMonthView();
+    } else if (this.viewMode === 'year') {
+      this.generateYearView();
+    }
+  }
 
+  generateMonthView(): void {
     const startDay = this.current.clone().startOf('month').startOf('week');
     const day = startDay.clone().subtract(1, 'day');
-    const dayArray = [...Array(totalDays)].map(() => day.add(1, 'day').clone());
-
-    this.daysInMonth = dayArray;
+    this.daysInMonth = [...Array(this.totalDays)].map(() =>
+      day.add(1, 'day').clone()
+    );
 
     this.store
       .select(selectAbsencesInRange(this.current))
@@ -96,7 +119,49 @@ export class CalendarComponent {
             }));
           })
           .flat();
+
+        this.filterAbsences(this.selectedAbsenceType);
       });
+  }
+
+  generateYearView(): void {
+    const startMonth = this.current.clone().startOf('year');
+    this.yearMonths = [...Array(12)].map((_, i) => {
+      const month = startMonth.clone().add(i, 'month');
+      const startDay = month.clone().startOf('month').startOf('week');
+      const day = startDay.clone().subtract(1, 'day');
+
+      const days = [...Array(this.totalDays)].map(() =>
+        day.add(1, 'day').clone()
+      );
+
+      return { month, days };
+    });
+  }
+
+  changeViewMode(event: MatButtonToggleChange): void {
+    this.viewMode = event.value;
+    this.updateCalendar();
+  }
+
+  changeMonthHandler(direction: number): void {
+    const increment = this.viewMode === 'month' ? 'month' : 'year';
+    this.store.dispatch(
+      setCurrentDate({
+        currentDate: this.current.clone().add(direction, increment),
+      })
+    );
+    this.updateCalendar();
+  }
+
+  filterAbsences(value: string | undefined): void {
+    if (value) {
+      this.filteredAbsences = this.absencesByDay.filter(
+        (absence) => absence.absenceType === value
+      );
+    } else {
+      this.filteredAbsences = this.absencesByDay;
+    }
   }
 
   getDatesInRange(from: moment.Moment, to: moment.Moment): moment.Moment[] {
@@ -111,18 +176,9 @@ export class CalendarComponent {
     return dates;
   }
 
-  changeMonthHandler(direction: number): void {
-    this.store.dispatch(
-      setCurrentDate({
-        currentDate: this.current.clone().add(direction, 'month'),
-      })
-    );
-    this.generateCalendar();
-  }
-
   todayMonthHandler(): void {
     this.store.dispatch(setCurrentDate({ currentDate: this.today.clone() }));
-    this.generateCalendar();
+    this.updateCalendar();
   }
 
   onAbsenceClick(
@@ -148,6 +204,12 @@ export class CalendarComponent {
           }
         });
     }
+  }
+
+  onMonthClick(month: moment.Moment) {
+    this.store.dispatch(setCurrentDate({ currentDate: month }));
+    this.viewMode = 'month';
+    this.updateCalendar();
   }
 
   ngOnDestroy(): void {

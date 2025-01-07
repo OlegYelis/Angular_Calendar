@@ -41,6 +41,20 @@
       container-shape: 15px,
     )
   );
+
+  @include mat.button-toggle-overrides(
+    (
+      shape: 5px,
+      background-color: var(--secondary-bg-color),
+      text-color: var(--primary-text-color),
+      label-text-size: 12px,
+      height: 30px,
+      state-layer-color: var(--accent-color),
+      selected-state-background-color: var(--accent-color),
+      selected-state-text-color: var(--primary-btn-color),
+      divider-color: none,
+    )
+  );
 }
 
 body {
