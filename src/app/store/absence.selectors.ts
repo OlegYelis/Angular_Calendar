@@ -59,3 +59,8 @@ export const selectAbsenceDaysByYearAndType = (
         return totalDays + end.diff(start, 'days') + 1;
       }, 0);
   });
+
+export const selectAbsenceById = (absenceId: string) =>
+  createSelector(selectAllAbsences, (absences: Absence[]) => {
+    return absences.find((absence) => absence.id === absenceId) || null;
+  });

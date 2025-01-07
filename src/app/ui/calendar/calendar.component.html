@@ -32,6 +32,7 @@
       [class.calendar__other-month]="day | sameMonth : current"
       [class.calendar__today]="day | isToday : today"
       [class.calendar__weekend]="day | isWeekend"
+      (click)="onAbsenceClick(day, absencesByDay, $event)"
     >
       {{ day | dayFormatter }}
 

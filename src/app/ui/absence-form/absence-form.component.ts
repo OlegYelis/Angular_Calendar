@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { take, takeUntil } from 'rxjs/operators';
 import {
   ReactiveFormsModule,
   FormGroup,
@@ -13,13 +13,27 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { provideMomentDateAdapter } from '@angular/material-moment-adapter';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
-import { MatDialogModule } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import {
+  MatDialogModule,
+  MatDialogRef,
+  MAT_DIALOG_DATA,
+  MatDialog,
+} from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import moment from 'moment';
-import { selectAllAbsences } from '../../store/absence.selectors';
-import { addAbsence } from '../../store/absence.actions';
+import {
+  selectAbsenceById,
+  selectAllAbsences,
+} from '../../store/absence.selectors';
+import {
+  addAbsence,
+  deleteAbsence,
+  updateAbsence,
+} from '../../store/absence.actions';
 import { LIMITS } from '../../store/limits';
 import { Absence, AbsenceType } from '../../store/absence.model';
+import { ConfirmationFormComponent } from '../confirmation-form/confirmation-form.component';
 
 export const MY_FORMATS = {
   parse: {
@@ -50,13 +64,17 @@ export const MY_FORMATS = {
 })
 export class AbsenceFormComponent {
   private readonly store = inject(Store);
+  readonly dialogRef = inject(MatDialogRef<AbsenceFormComponent>);
+  readonly data = inject(MAT_DIALOG_DATA);
+  private _snackBar = inject(MatSnackBar);
+  readonly dialog = inject(MatDialog);
   currentAbsence = AbsenceType;
 
   form = new FormGroup({
-    absenceType: new FormControl(null, Validators.required),
-    fromDate: new FormControl(null, Validators.required),
-    toDate: new FormControl(null, Validators.required),
-    comment: new FormControl(null),
+    absenceType: new FormControl<AbsenceType | null>(null, Validators.required),
+    fromDate: new FormControl<moment.Moment | null>(null, Validators.required),
+    toDate: new FormControl<moment.Moment | null>(null, Validators.required),
+    comment: new FormControl<string | null>(null),
   });
 
   absencesByYear: Record<number, { vacation: number; sick: number }> = {};
@@ -75,6 +93,32 @@ export class AbsenceFormComponent {
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  ngOnInit() {
+    if (this.data?.absenceId) {
+      this.loadAbsenceData(this.data.absenceId);
+    }
+  }
+
+  private loadAbsenceData(absenceId: string) {
+    this.store
+      .select(selectAbsenceById(absenceId))
+      .pipe(take(1))
+      .subscribe((absence) => {
+        if (absence) {
+          this.populateForm(absence);
+        }
+      });
+  }
+
+  private populateForm(absence: Absence) {
+    this.form.setValue({
+      absenceType: absence.absenceType || null,
+      fromDate: moment(absence.fromDate) || null,
+      toDate: moment(absence.toDate) || null,
+      comment: absence.comment || null,
+    });
   }
 
   groupAbsencesByYear(absences: Absence[]) {
@@ -130,28 +174,90 @@ export class AbsenceFormComponent {
     return { effectiveFromDate, effectiveToDate };
   }
 
-  onSubmit() {
+  deleteAbscenceHandler() {
+    const dialogRef = this.dialog.open(ConfirmationFormComponent, {
+      data: {
+        title: 'Confirmation of deletion',
+        description: 'Are you sure you want to remove this absence?',
+        buttonOk: 'Delete',
+        buttonCancel: 'Cancel',
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result === 'ok') {
+        this.store.dispatch(deleteAbsence({ id: this.data.absenceId }));
+        this.form.reset();
+        this.dialogRef.close();
+        this._snackBar.open('Absence deleted successfully!', 'Close');
+      }
+    });
+  }
+
+  createNewAbsenceHandler() {
     if (this.form.invalid) {
-      alert('Please fill in all required fields.');
+      this._snackBar.open('Please fill in all required fields.', 'Close');
       return;
     }
 
     const { absenceType, fromDate, toDate } = this.form.value;
 
     if (!absenceType || !fromDate || !toDate) {
-      alert('Please fill in all required fields.');
+      this._snackBar.open('Please fill in all required fields.', 'Close');
       return;
     }
 
-    const { from, to } = this.getFormattedDates(fromDate, toDate);
-
-    if (this.isAbsenceExceedingLimits(absenceType, from, to)) {
+    if (this.isAbsenceExceedingLimits(absenceType, fromDate, toDate)) {
       return;
     }
 
-    const absence = this.createAbsenceObject(absenceType, from, to);
+    if (this.isAbsenceOverlapping(fromDate, toDate)) {
+      this._snackBar.open(
+        'The selected dates overlap with an existing absence.',
+        'Close'
+      );
+      return;
+    }
+
+    const absence = this.createAbsenceObject(absenceType, fromDate, toDate);
     this.store.dispatch(addAbsence({ absence }));
     this.form.reset();
+    this.dialogRef.close();
+    this._snackBar.open('Absence added successfully!', 'Close');
+  }
+
+  updateAbsenceHandler() {
+    if (this.form.invalid) {
+      this._snackBar.open('Please fill in all required fields.', 'Close');
+      return;
+    }
+
+    const { absenceType, fromDate, toDate } = this.form.value;
+
+    if (!absenceType || !fromDate || !toDate) {
+      this._snackBar.open('Please fill in all required fields.', 'Close');
+      return;
+    }
+
+    if (this.isAbsenceExceedingLimits(absenceType, fromDate, toDate)) {
+      return;
+    }
+
+    if (this.isAbsenceOverlapping(fromDate, toDate)) {
+      this._snackBar.open(
+        'The selected dates overlap with an existing absence.',
+        'Close'
+      );
+      return;
+    }
+
+    const absence = this.createAbsenceObject(absenceType, fromDate, toDate);
+    absence.id = this.data.absenceId;
+    console.log('absence: ', absence);
+    this.store.dispatch(updateAbsence({ absence }));
+    this.form.reset();
+    this.dialogRef.close();
+    this._snackBar.open('Absence updated successfully!', 'Close');
   }
 
   private isAbsenceExceedingLimits(
@@ -172,7 +278,30 @@ export class AbsenceFormComponent {
         this.absencesByYear[year] = { vacation: 0, sick: 0 };
       }
 
-      const usedDays = this.absencesByYear[year]?.[absenceType] || 0;
+      let usedDays = this.absencesByYear[year]?.[absenceType] || 0;
+      if (this.data?.absenceId) {
+        const currentAbsence = this.getCurrentAbsenceById(this.data.absenceId);
+
+        if (
+          currentAbsence &&
+          currentAbsence.absenceType === absenceType &&
+          moment(currentAbsence.fromDate).year() <= year &&
+          moment(currentAbsence.toDate).year() >= year
+        ) {
+          const {
+            effectiveFromDate: currentFromDate,
+            effectiveToDate: currentToDate,
+          } = this.getEffectiveDates(
+            moment(currentAbsence.fromDate),
+            moment(currentAbsence.toDate),
+            year
+          );
+
+          const currentDays = currentToDate.diff(currentFromDate, 'days') + 1;
+
+          usedDays -= currentDays;
+        }
+      }
 
       if (
         (absenceType === this.currentAbsence.Vacation &&
@@ -180,11 +309,54 @@ export class AbsenceFormComponent {
         (absenceType === this.currentAbsence.Sick &&
           usedDays + requestedDays > LIMITS.sick)
       ) {
-        alert(`Exceeded limit for ${absenceType} days in the year ${year}.`);
+        this._snackBar.open(
+          `Exceeded limit for ${absenceType} days in the year ${year}.`,
+          'Close'
+        );
         return true;
       }
     }
+
     return false;
+  }
+
+  private getCurrentAbsenceById(absenceId: string): Absence | undefined {
+    let absence: Absence | undefined;
+    this.store
+      .select(selectAbsenceById(absenceId))
+      .pipe(take(1))
+      .subscribe((result) => (absence = result ?? undefined));
+    return absence;
+  }
+
+  private isAbsenceOverlapping(
+    from: moment.Moment,
+    to: moment.Moment
+  ): boolean {
+    let isOverlapping = false;
+
+    this.store
+      .select(selectAllAbsences)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((absences) => {
+        isOverlapping = absences.some((absence) => {
+          if (absence.id === this.data?.absenceId) {
+            return false;
+          }
+
+          const existingFrom = moment(absence.fromDate);
+          const existingTo = moment(absence.toDate);
+
+          return (
+            from.isBetween(existingFrom, existingTo, 'days', '[]') ||
+            to.isBetween(existingFrom, existingTo, 'days', '[]') ||
+            (existingFrom.isBetween(from, to, 'days', '[]') &&
+              existingTo.isBetween(from, to, 'days', '[]'))
+          );
+        });
+      });
+
+    return isOverlapping;
   }
 
   private createAbsenceObject(

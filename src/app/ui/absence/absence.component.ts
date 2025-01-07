@@ -32,6 +32,7 @@ import moment from 'moment';
 export class AbsenceComponent {
   private readonly store = inject(Store);
   private destroy$ = new Subject<void>();
+  readonly dialog = inject(MatDialog);
 
   public readonly currentDate$ = this.store.select(selectCurrentDate);
 
@@ -63,7 +64,7 @@ export class AbsenceComponent {
     )
   );
 
-  constructor(private dialog: MatDialog) {}
+  constructor() {}
 
   ngOnInit(): void {
     combineLatest([this.vacationDays$, this.sickDays$]).pipe(
