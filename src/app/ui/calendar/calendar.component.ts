@@ -10,6 +10,7 @@ import { AbsenceTypeClassPipe } from '../../pipes/absence-type-class.pipe';
 import {
   selectAbsencesInRange,
   selectCurrentDate,
+  selectFilteredAbsences,
 } from '../../store/absence.selectors';
 import moment from 'moment';
 import { setCurrentDate } from '../../store/absence.actions';
@@ -26,8 +27,10 @@ import {
 } from '@angular/material/button-toggle';
 import { YearMonth } from '../../data/interfaces/year-month.interface';
 import { MatSelectModule } from '@angular/material/select';
-import { AbsenceType } from '../../store/absence.model';
 import { ReactiveFormsModule } from '@angular/forms';
+import { AbsenceType } from '../../data/enums/abscense-type.enum';
+import { CalendarViewMode } from '../../data/enums/calendar-view-mode.enum';
+import { Absence } from '../../store/absence.model';
 
 @Component({
   selector: 'app-calendar',
@@ -55,6 +58,7 @@ export class CalendarComponent {
   private destroy$ = new Subject<void>();
   readonly dialog = inject(MatDialog);
   currentAbsence = AbsenceType;
+  CalendarViewMode = CalendarViewMode;
 
   public readonly currentDate$ = this.store.select(selectCurrentDate);
 
@@ -69,10 +73,9 @@ export class CalendarComponent {
       .day(i + 1)
       .format('ddd')
   );
-  viewMode: 'month' | 'year' = 'month';
+  viewMode: CalendarViewMode = CalendarViewMode.Month;
 
   absencesByDay: AbsenceByDay[] = [];
-  filteredAbsences: AbsenceByDay[] = [];
   selectedAbsenceType: AbsenceType | undefined = undefined;
 
   constructor() {
@@ -87,9 +90,9 @@ export class CalendarComponent {
   }
 
   updateCalendar(): void {
-    if (this.viewMode === 'month') {
+    if (this.viewMode === CalendarViewMode.Month) {
       this.generateMonthView();
-    } else if (this.viewMode === 'year') {
+    } else if (this.viewMode === CalendarViewMode.Year) {
       this.generateYearView();
     }
   }
@@ -105,23 +108,40 @@ export class CalendarComponent {
       .select(selectAbsencesInRange(this.current))
       .pipe(takeUntil(this.destroy$))
       .subscribe((absences) => {
-        this.absencesByDay = absences
-          .map((absence) => {
-            const fromDate = moment(absence.fromDate);
-            const toDate = moment(absence.toDate);
-            const datesInRange = this.getDatesInRange(fromDate, toDate);
-
-            return datesInRange.map((date) => ({
-              id: absence.id,
-              date,
-              absenceType: absence.absenceType,
-              comment: absence.comment || '',
-            }));
-          })
-          .flat();
-
+        this.absencesByDay = this.mapAbsencesToDates(absences);
         this.filterAbsences(this.selectedAbsenceType);
       });
+  }
+
+  filterAbsences(value: string | undefined): void {
+    this.store
+      .select(selectFilteredAbsences(value))
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((absences) => {
+        this.absencesByDay = this.mapAbsencesToDates(absences);
+      });
+  }
+
+  private mapAbsencesToDates(absences: Absence[]): Array<{
+    id: string;
+    date: moment.Moment;
+    absenceType: string;
+    comment: string;
+  }> {
+    return absences
+      .map((absence) => {
+        const fromDate = moment(absence.fromDate);
+        const toDate = moment(absence.toDate);
+        const datesInRange = this.getDatesInRange(fromDate, toDate);
+
+        return datesInRange.map((date) => ({
+          id: absence.id,
+          date,
+          absenceType: absence.absenceType,
+          comment: absence.comment || '',
+        }));
+      })
+      .flat();
   }
 
   generateYearView(): void {
@@ -145,23 +165,13 @@ export class CalendarComponent {
   }
 
   changeMonthHandler(direction: number): void {
-    const increment = this.viewMode === 'month' ? 'month' : 'year';
+    const increment = this.viewMode;
     this.store.dispatch(
       setCurrentDate({
         currentDate: this.current.clone().add(direction, increment),
       })
     );
     this.updateCalendar();
-  }
-
-  filterAbsences(value: string | undefined): void {
-    if (value) {
-      this.filteredAbsences = this.absencesByDay.filter(
-        (absence) => absence.absenceType === value
-      );
-    } else {
-      this.filteredAbsences = this.absencesByDay;
-    }
   }
 
   getDatesInRange(from: moment.Moment, to: moment.Moment): moment.Moment[] {
@@ -208,7 +218,7 @@ export class CalendarComponent {
 
   onMonthClick(month: moment.Moment) {
     this.store.dispatch(setCurrentDate({ currentDate: month }));
-    this.viewMode = 'month';
+    this.viewMode = CalendarViewMode.Month;
     this.updateCalendar();
   }
 

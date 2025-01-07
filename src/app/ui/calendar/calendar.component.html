@@ -7,8 +7,12 @@
       (change)="changeViewMode($event)"
       hideSingleSelectionIndicator="true"
     >
-      <mat-button-toggle value="month">Month</mat-button-toggle>
-      <mat-button-toggle value="year">Year</mat-button-toggle>
+      <mat-button-toggle [value]="CalendarViewMode.Month"
+        >Month</mat-button-toggle
+      >
+      <mat-button-toggle [value]="CalendarViewMode.Year"
+        >Year</mat-button-toggle
+      >
     </mat-button-toggle-group>
   </div>
 
@@ -18,7 +22,7 @@
         &lt;
       </button>
       <p class="calendar__current-date">
-        @if (viewMode === 'year'){
+        @if (viewMode === CalendarViewMode.Year){
         {{ current | dateFormatter : "YYYY" }}
         } @else {
         {{ current | dateFormatter }}
@@ -49,7 +53,7 @@
     </mat-form-field>
   </div>
 
-  @if (viewMode === 'month'){
+  @if (viewMode === CalendarViewMode.Month){
   <div class="calendar__week-days">
     @for (day of weekDays; track day) {
     <div class="calendar__week-day">{{ day }}</div>
@@ -63,22 +67,22 @@
       [class.calendar__other-month]="day | sameMonth : current"
       [class.calendar__today]="day | isToday : today"
       [class.calendar__weekend]="day | isWeekend"
-      (click)="onAbsenceClick(day, filteredAbsences, $event)"
+      (click)="onAbsenceClick(day, absencesByDay, $event)"
     >
       {{ day | dayFormatter }}
 
-      @if (day | isDayAbsent : filteredAbsences) {
+      @if (day | isDayAbsent : absencesByDay) {
       <p
         class="calendar__absence"
-        [class]="day | getAbsenceType : filteredAbsences | absenceTypeClass"
+        [class]="day | getAbsenceType : absencesByDay | absenceTypeClass"
       >
-        {{ day | getAbsenceComment : filteredAbsences }}
+        {{ day | getAbsenceComment : absencesByDay }}
       </p>
       }
     </div>
     }
   </div>
-  } @if (viewMode === 'year'){
+  } @if (viewMode === CalendarViewMode.Year){
   <div class="calendar__months">
     @for (monthData of yearMonths; track monthData.month.unix()) {
     <div class="calendar__month" (click)="onMonthClick(monthData.month)">

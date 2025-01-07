@@ -64,3 +64,11 @@ export const selectAbsenceById = (absenceId: string) =>
   createSelector(selectAllAbsences, (absences: Absence[]) => {
     return absences.find((absence) => absence.id === absenceId) || null;
   });
+
+export const selectFilteredAbsences = (absenceType: string | undefined) =>
+  createSelector(selectAllAbsences, (absences: Absence[]) => {
+    if (absenceType) {
+      return absences.filter((absence) => absence.absenceType === absenceType);
+    }
+    return absences;
+  });
