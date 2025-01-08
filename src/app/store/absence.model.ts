@@ -1,7 +1,4 @@
-export enum AbsenceType {
-  Sick = 'sick',
-  Vacation = 'vacation',
-}
+import { AbsenceType } from '../data/enums/abscense-type.enum';
 
 export interface Absence {
   id: string;

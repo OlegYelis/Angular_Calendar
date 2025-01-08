@@ -8,13 +8,32 @@
   align-items: center;
   justify-content: space-between;
   padding: 15px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.calendar__heading {
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--heading-text-color);
 }
 
 .calendar__actions {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  padding: 15px 0;
+}
+
+.calendar__date-actions {
+  display: flex;
+  align-items: center;
   justify-content: center;
   gap: 10px;
+}
+
+.calendar__select {
+  height: 55px;
+  width: 250px;
 }
 
 .calendar__current-date {
@@ -79,6 +98,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 145px;
   min-height: 40px;
   background-color: var(--secondary-bg-color);
   color: var(--secondary-text-color);
@@ -91,10 +111,12 @@
 
 .calendar__day {
   display: flex;
+  box-sizing: border-box;
   flex-direction: column;
   align-items: flex-end;
   justify-content: flex-start;
-  min-height: 120px;
+  height: 120px;
+  width: 145px;
   padding: 5px;
   font-size: 12px;
   border: 1px solid var(--border-color);
@@ -136,6 +158,7 @@
   padding: 2px;
   margin: 5px 0 0;
   border-radius: 2px;
+  overflow: auto;
 
   color: var(--absence-comment-color);
 }
@@ -146,4 +169,52 @@
 
 .calendar__absence--sick {
   background-color: var(--absence-sick-color);
+}
+
+.calendar__months {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.calendar__month {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.calendar__month-day {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--heading-text-color);
+  margin: 10px;
+}
+
+.calendar__month-days {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+
+  & .calendar__week-day {
+    width: 30px;
+    min-height: 30px;
+    font-size: 10px;
+    background-color: transparent;
+    color: var(--heading-text-color);
+    border: none;
+  }
+
+  & .calendar__day {
+    align-items: center;
+    width: 30px;
+    height: 30px;
+
+    box-sizing: border-box;
+    justify-content: center;
+
+    font-size: 11px;
+    border: none;
+  }
 }

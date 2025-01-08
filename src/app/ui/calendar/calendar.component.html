@@ -1,11 +1,32 @@
 <div class="calendar">
   <div class="calendar__header">
-    <div class="calendar__actions">
+    <h1 class="calendar__heading">Calendar</h1>
+    <mat-button-toggle-group
+      name="viewMode"
+      [value]="viewMode"
+      (change)="changeViewMode($event)"
+      hideSingleSelectionIndicator="true"
+    >
+      <mat-button-toggle [value]="CalendarViewMode.Month"
+        >Month</mat-button-toggle
+      >
+      <mat-button-toggle [value]="CalendarViewMode.Year"
+        >Year</mat-button-toggle
+      >
+    </mat-button-toggle-group>
+  </div>
+
+  <div class="calendar__actions">
+    <div class="calendar__date-actions">
       <button class="calendar__button" (click)="changeMonthHandler(-1)">
         &lt;
       </button>
       <p class="calendar__current-date">
+        @if (viewMode === CalendarViewMode.Year){
+        {{ current | dateFormatter : "YYYY" }}
+        } @else {
         {{ current | dateFormatter }}
+        }
       </p>
       <button class="calendar__button" (click)="changeMonthHandler(1)">
         &gt;
@@ -17,8 +38,22 @@
         Today
       </button>
     </div>
+
+    <mat-form-field appearance="outline" class="calendar__select">
+      <mat-label>Filter by absence type</mat-label>
+      <mat-select
+        тame="absenceType"
+        [value]="selectedAbsenceType"
+        (selectionChange)="filterAbsences($event.value)"
+      >
+        <mat-option>None</mat-option>
+        <mat-option [value]="currentAbsence.Sick">Sick</mat-option>
+        <mat-option [value]="currentAbsence.Vacation">Vacation</mat-option>
+      </mat-select>
+    </mat-form-field>
   </div>
 
+  @if (viewMode === CalendarViewMode.Month){
   <div class="calendar__week-days">
     @for (day of weekDays; track day) {
     <div class="calendar__week-day">{{ day }}</div>
@@ -47,4 +82,33 @@
     </div>
     }
   </div>
+  } @if (viewMode === CalendarViewMode.Year){
+  <div class="calendar__months">
+    @for (monthData of yearMonths; track monthData.month.unix()) {
+    <div class="calendar__month" (click)="onMonthClick(monthData.month)">
+      <p class="calendar__month-day">
+        {{ monthData.month.format("MMMM") }}
+      </p>
+      <div class="calendar__month-days">
+        <div class="calendar__week-days">
+          @for (day of weekDays; track day) {
+          <p class="calendar__week-day">{{ day }}</p>
+          }
+        </div>
+        <div class="calendar__days">
+          @for (day of monthData.days; track day.unix()) {
+          <div
+            class="calendar__day"
+            [class.calendar__other-month]="day | sameMonth : monthData.month"
+            [class.calendar__today]="day | isToday : today"
+          >
+            {{ day.format("D") }}
+          </div>
+          }
+        </div>
+      </div>
+    </div>
+    }
+  </div>
+  }
 </div>

@@ -32,8 +32,9 @@ import {
   updateAbsence,
 } from '../../store/absence.actions';
 import { LIMITS } from '../../store/limits';
-import { Absence, AbsenceType } from '../../store/absence.model';
+import { Absence } from '../../store/absence.model';
 import { ConfirmationFormComponent } from '../confirmation-form/confirmation-form.component';
+import { AbsenceType } from '../../data/enums/abscense-type.enum';
 
 export const MY_FORMATS = {
   parse: {

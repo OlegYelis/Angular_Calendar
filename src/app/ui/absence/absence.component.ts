@@ -12,9 +12,9 @@ import {
   selectCurrentDate,
 } from '../../store/absence.selectors';
 import { DateFormatterPipe } from '../../pipes/date-formatter.pipe';
-import { AbsenceType } from '../../store/absence.model';
 import { CommonModule } from '@angular/common';
 import moment from 'moment';
+import { AbsenceType } from '../../data/enums/abscense-type.enum';
 
 @Component({
   selector: 'app-absence',
