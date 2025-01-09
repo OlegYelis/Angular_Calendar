@@ -103,6 +103,13 @@
             [class.calendar__today]="day | isToday : today"
           >
             {{ day.format("D") }}
+
+            @if (day | isDayAbsent : absencesByDay) {
+            <div
+              class="calendar__absence"
+              [class]="day | getAbsenceType : absencesByDay | absenceTypeClass"
+            ></div>
+            }
           </div>
           }
         </div>
